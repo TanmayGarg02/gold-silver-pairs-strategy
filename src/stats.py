@@ -63,6 +63,6 @@ def half_life(
     delta = delta.dropna()
 
     model = OLS(delta, sm.add_constant(spread_lag)).fit()
-    beta = model.params[1]
+    beta = model.params.iloc[1]
 
     return -np.log(2) / beta

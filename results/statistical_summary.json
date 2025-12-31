@@ -1,0 +1,12 @@
+{
+    "hedge_ratio": 0.8398666970367117,
+    "engle_granger": {
+        "test_statistic": -3.1153520201868026,
+        "p_value": 0.08526081637721661
+    },
+    "adf_on_spread": {
+        "test_statistic": -3.1143760733210906,
+        "p_value": 0.025507426097298832
+    },
+    "half_life_days": 69.69837286756666
+}

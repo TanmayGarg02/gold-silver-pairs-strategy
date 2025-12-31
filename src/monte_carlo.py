@@ -8,9 +8,8 @@ def monte_carlo_simulation(
     num_simulations: int = 1000
 ) -> Dict[str, np.ndarray]:
 
-    simulated_equity = []
-
     returns = returns.dropna().values
+    simulated_equity = []
 
     for _ in range(num_simulations):
         sampled_returns = np.random.choice(
@@ -24,7 +23,6 @@ def monte_carlo_simulation(
     final_returns = simulated_equity[:, -1] - 1
 
     max_drawdowns = []
-
     for equity in simulated_equity:
         peak = np.maximum.accumulate(equity)
         drawdown = (equity - peak) / peak

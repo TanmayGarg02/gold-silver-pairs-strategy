@@ -1,6 +1,11 @@
-numpy
-pandas
-statsmodels
-matplotlib
-seaborn
+numpy~=2.3.3
+pandas~=2.3.3
+statsmodels~=0.14.6
 scipy
+matplotlib~=3.10.8
+seaborn
+jupyter
+
+requests~=2.32.5
+pyotp~=2.9.0
+python-dotenv~=1.1.1

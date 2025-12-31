@@ -3,6 +3,7 @@ import numpy as np
 from typing import Tuple
 
 
+# Compute rolling Z-score of the spread
 def compute_zscore(
     spread: pd.Series,
     window: int
@@ -15,22 +16,30 @@ def compute_zscore(
     return zscore
 
 
+# Generate entry and exit signals based on Z-score thresholds
 def generate_signals(
     zscore: pd.Series,
     entry_threshold: float,
-    exit_threshold: float
+    exit_threshold: float,
+    max_z: float = 3.0
 ) -> pd.Series:
 
     signal = pd.Series(index=zscore.index, data=0)
 
-    signal[zscore > entry_threshold] = -1   # short spread
-    signal[zscore < -entry_threshold] = 1   # long spread
+    # Entry signals
+    signal[zscore > entry_threshold] = -1
+    signal[zscore < -entry_threshold] = 1
 
+    # Exit on mean reversion
     signal[abs(zscore) < exit_threshold] = 0
+
+    # Stop loss on extreme divergence
+    signal[abs(zscore) > max_z] = 0
 
     return signal
 
 
+# Convert signals into persistent positions
 def position_from_signal(
     signal: pd.Series
 ) -> pd.Series:
@@ -39,3 +48,77 @@ def position_from_signal(
     position = position.fillna(0)
 
     return position
+
+
+# Apply volatility scaling to reduce exposure during high-risk periods
+def apply_volatility_scaling(
+    position: pd.Series,
+    spread: pd.Series,
+    vol_window: int
+) -> pd.Series:
+
+    spread_vol = spread.rolling(vol_window).std()
+    scaled_position = position / spread_vol
+    scaled_position = scaled_position.replace([np.inf, -np.inf], 0)
+
+    return scaled_position.fillna(0)
+
+
+# Enforce a maximum holding period based on half-life
+def apply_time_stop(
+    position: pd.Series,
+    max_holding_period: int
+) -> pd.Series:
+
+    pos = position.copy()
+    holding_time = 0
+    prev_pos = 0
+
+    for i in range(len(pos)):
+        if pos.iloc[i] != 0 and pos.iloc[i] == prev_pos:
+            holding_time += 1
+        else:
+            holding_time = 0
+
+        if holding_time > max_holding_period:
+            pos.iloc[i] = 0
+            holding_time = 0
+
+        prev_pos = pos.iloc[i]
+
+    return pos
+
+
+# Filter trades during extreme volatility regimes
+def apply_trade_filter(
+    position: pd.Series,
+    spread: pd.Series,
+    vol_window: int,
+    quantile: float = 0.9
+) -> pd.Series:
+
+    spread_vol = spread.rolling(vol_window).std()
+    vol_threshold = spread_vol.quantile(quantile)
+
+    filtered_position = position.copy()
+    filtered_position[spread_vol > vol_threshold] = 0
+
+    return filtered_position
+
+def apply_capped_volatility_scaling(
+    position: pd.Series,
+    spread: pd.Series,
+    vol_window: int,
+    min_scale: float = 0.5,
+    max_scale: float = 1.5
+) -> pd.Series:
+
+    spread_vol = spread.rolling(vol_window).std()
+    target_vol = spread_vol.median()
+
+    scale = target_vol / spread_vol
+    scale = scale.clip(lower=min_scale, upper=max_scale)
+
+    scaled_position = position * scale
+    return scaled_position.fillna(0)
+

@@ -1,18 +1,15 @@
 import pandas as pd
-import numpy as np
 from typing import Dict, Tuple
 
-from src.stats import (
-    estimate_hedge_ratio,
-    compute_spread,
-    half_life
-)
+from src.stats import compute_spread
 from src.strategy import (
     compute_zscore,
     generate_signals,
-    position_from_signal
+    position_from_signal,
+    apply_capped_volatility_scaling
 )
-from src.backtester import backtest_pairs_strategy, calculate_performance_metrics
+from src.backtester import backtest_pairs_strategy
+from src.metrics import calculate_performance_metrics
 
 
 def walk_forward_split(
@@ -21,7 +18,6 @@ def walk_forward_split(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     split_idx = int(len(prices) * train_ratio)
-
     train = prices.iloc[:split_idx]
     test = prices.iloc[split_idx:]
 
@@ -30,30 +26,43 @@ def walk_forward_split(
 
 def run_walk_forward(
     prices: pd.DataFrame,
+    hedge_ratio: float,
     z_window: int,
     entry_z: float,
     exit_z: float,
+    max_z: float,
     transaction_cost: float,
     periods_per_year: int
-) -> Dict[str, Dict[str, float]]:
+) -> Dict[str, Dict]:
 
     train, test = walk_forward_split(prices)
 
-    # ---- IN SAMPLE ----
-    hedge_ratio = estimate_hedge_ratio(
-        train["gold"], train["silver"]
-    )
-
+    # ---------- IN SAMPLE ----------
     spread_train = compute_spread(
         train["gold"], train["silver"], hedge_ratio
     )
 
     z_train = compute_zscore(spread_train, z_window)
-    signal_train = generate_signals(z_train, entry_z, exit_z)
+
+    signal_train = generate_signals(
+        z_train, entry_z, exit_z, max_z
+    )
+
     position_train = position_from_signal(signal_train)
 
+    position_train = apply_capped_volatility_scaling(
+        position_train,
+        spread_train,
+        vol_window=z_window,
+        min_scale=0.5,
+        max_scale=1.5
+    )
+
     bt_train = backtest_pairs_strategy(
-        train, position_train, hedge_ratio, transaction_cost
+        train,
+        position_train,
+        hedge_ratio,
+        transaction_cost
     )
 
     metrics_train = calculate_performance_metrics(
@@ -61,17 +70,32 @@ def run_walk_forward(
         periods_per_year
     )
 
-    # ---- OUT OF SAMPLE ----
+    # ---------- OUT OF SAMPLE ----------
     spread_test = compute_spread(
         test["gold"], test["silver"], hedge_ratio
     )
 
     z_test = compute_zscore(spread_test, z_window)
-    signal_test = generate_signals(z_test, entry_z, exit_z)
+
+    signal_test = generate_signals(
+        z_test, entry_z, exit_z, max_z
+    )
+
     position_test = position_from_signal(signal_test)
 
+    position_test = apply_capped_volatility_scaling(
+        position_test,
+        spread_test,
+        vol_window=z_window,
+        min_scale=0.5,
+        max_scale=1.5
+    )
+
     bt_test = backtest_pairs_strategy(
-        test, position_test, hedge_ratio, transaction_cost
+        test,
+        position_test,
+        hedge_ratio,
+        transaction_cost
     )
 
     metrics_test = calculate_performance_metrics(
@@ -80,6 +104,12 @@ def run_walk_forward(
     )
 
     return {
-        "in_sample": metrics_train,
-        "out_of_sample": metrics_test
+        "in_sample": {
+            "metrics": metrics_train,
+            "returns": bt_train["strategy_return"].dropna()
+        },
+        "out_of_sample": {
+            "metrics": metrics_test,
+            "returns": bt_test["strategy_return"].dropna()
+        }
     }
