@@ -30,6 +30,24 @@ def estimate_hedge_ratio(
 
     return model.params[1]
 
+def estimate_rolling_hedge_ratio(
+    y: pd.Series,
+    x: pd.Series,
+    window: int
+) -> pd.Series:
+    betas = []
+
+    for i in range(len(y)):
+        if i < window:
+            betas.append(float("nan"))
+        else:
+            y_window = y.iloc[i - window:i]
+            x_window = x.iloc[i - window:i]
+
+            model = sm.OLS(y_window, sm.add_constant(x_window)).fit()
+            betas.append(model.params.iloc[1])
+
+    return pd.Series(betas, index=y.index)
 
 def compute_spread(
     gold: pd.Series,

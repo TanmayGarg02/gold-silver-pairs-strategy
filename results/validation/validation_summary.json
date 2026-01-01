@@ -1,0 +1,27 @@
+{
+    "in_sample": {
+        "Total Return": 0.26282933011922105,
+        "Annualized Return": 0.03478034538969377,
+        "Sharpe Ratio": 0.29136459223453637,
+        "Max Drawdown": -0.2861960587231922,
+        "Calmar Ratio": 0.12152629056060199
+    },
+    "out_of_sample": {
+        "Total Return": 0.23928873364834868,
+        "Annualized Return": 0.07611372068375455,
+        "Sharpe Ratio": 0.5919431902184666,
+        "Max Drawdown": -0.1288792079671388,
+        "Calmar Ratio": 0.5905818470203648
+    },
+    "sharpe_ratio_check": {
+        "in_sample_sharpe": 0.29136459223453637,
+        "out_of_sample_sharpe": 0.5919431902184666,
+        "oos_to_is_ratio": 2.031623628934215
+    },
+    "monte_carlo": {
+        "median_final_return": 0.2287996985455717,
+        "p05_final_return": -0.13211307908968697,
+        "p95_final_return": 0.770723450677626,
+        "probability_dd_gt_20pct": 0.271
+    }
+}

@@ -8,8 +8,7 @@ from src.strategy import (
     position_from_signal,
     apply_capped_volatility_scaling
 )
-from src.backtester import backtest_pairs_strategy
-from src.metrics import calculate_performance_metrics
+from src.backtester import backtest_pairs_strategy, calculate_performance_metrics
 
 
 def walk_forward_split(

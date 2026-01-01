@@ -38,7 +38,6 @@ def generate_signals(
 
     return signal
 
-
 # Convert signals into persistent positions
 def position_from_signal(
     signal: pd.Series
@@ -50,60 +49,6 @@ def position_from_signal(
     return position
 
 
-# Apply volatility scaling to reduce exposure during high-risk periods
-def apply_volatility_scaling(
-    position: pd.Series,
-    spread: pd.Series,
-    vol_window: int
-) -> pd.Series:
-
-    spread_vol = spread.rolling(vol_window).std()
-    scaled_position = position / spread_vol
-    scaled_position = scaled_position.replace([np.inf, -np.inf], 0)
-
-    return scaled_position.fillna(0)
-
-
-# Enforce a maximum holding period based on half-life
-def apply_time_stop(
-    position: pd.Series,
-    max_holding_period: int
-) -> pd.Series:
-
-    pos = position.copy()
-    holding_time = 0
-    prev_pos = 0
-
-    for i in range(len(pos)):
-        if pos.iloc[i] != 0 and pos.iloc[i] == prev_pos:
-            holding_time += 1
-        else:
-            holding_time = 0
-
-        if holding_time > max_holding_period:
-            pos.iloc[i] = 0
-            holding_time = 0
-
-        prev_pos = pos.iloc[i]
-
-    return pos
-
-
-# Filter trades during extreme volatility regimes
-def apply_trade_filter(
-    position: pd.Series,
-    spread: pd.Series,
-    vol_window: int,
-    quantile: float = 0.9
-) -> pd.Series:
-
-    spread_vol = spread.rolling(vol_window).std()
-    vol_threshold = spread_vol.quantile(quantile)
-
-    filtered_position = position.copy()
-    filtered_position[spread_vol > vol_threshold] = 0
-
-    return filtered_position
 
 def apply_capped_volatility_scaling(
     position: pd.Series,

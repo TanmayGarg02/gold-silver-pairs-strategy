@@ -13,6 +13,10 @@ Silver prices using cointegration and mean reversion principles. Trades are
 generated based on statistically significant deviations of the spread and are
 validated using walk-forward analysis and Monte Carlo simulations.
 
+Multiple strategy refinements were explored, including dynamic hedge ratios and
+advanced risk controls. The final strategy was selected based on empirical
+performance and robustness rather than complexity.
+
 ---
 
 ## Project Structure
@@ -25,18 +29,18 @@ gold_silver_strategy/
 │   └── silver.csv                 # Historical Silver futures data
 │
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_statistical_tests.ipynb
-│   ├── 03_backtest.ipynb
-│   └── 04_validation.ipynb
+│   ├── 01_data_exploration.ipynb  # Price behavior and correlation analysis
+│   ├── 02_statistical_tests.ipynb # Cointegration and stationarity tests
+│   ├── 03_backtest.ipynb          # Strategy backtest and performance analysis
+│   └── 04_validation.ipynb        # Walk-forward and Monte Carlo validation
 │
 ├── src/
-│   ├── data_loader.py
-│   ├── stats.py
-│   ├── strategy.py
-│   ├── backtester.py
-│   ├── validation.py
-│   └── monte_carlo.py
+│   ├── data_loader.py             # Data alignment and preprocessing
+│   ├── stats.py                   # Statistical tests and estimators
+│   ├── strategy.py                # Signal generation and risk controls
+│   ├── backtester.py              # PnL and performance computation
+│   ├── validation.py              # Walk-forward validation logic
+│   └── monte_carlo.py             # Monte Carlo risk simulation
 │
 ├── results/
 │   ├── figures/                   # Saved plots and diagrams
@@ -83,16 +87,28 @@ hardcoded in the repository.
 - Entry threshold at ±2 standard deviations
 - Exit threshold at ±0.5 standard deviations
 - Positions held until partial mean reversion
+- Mild capped volatility scaling for risk control
 
 ### 4. Backtesting
 - Realistic execution with no lookahead bias
 - Transaction cost modeling
-- Performance metrics: Sharpe ratio, drawdown, Calmar ratio
+- Performance metrics: Total Return, Annual Return, Sharpe ratio, drawdown, Calmar ratio
 
 ### 5. Validation and Risk Assessment
 - Walk-forward (in-sample vs out-of-sample) testing
 - Monte Carlo simulations for tail-risk estimation
 - Parameter robustness checks
+
+---
+### Experimental Findings
+
+Several enhancements were evaluated, including rolling hedge ratios,
+asymmetric entry thresholds, and volatility-adjusted signals. While some of
+these approaches reduced drawdowns, they also weakened the strategy’s
+profitability.
+
+The final model was selected based on the best empirical trade-off between
+returns, stability, and interpretability.
 
 ---
 
